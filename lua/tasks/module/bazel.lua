@@ -118,7 +118,10 @@ function Bazel.tasks.build_current_files_target(module_config, _)
 
   return {
     cmd = bazel_command(module_config),
-    args = vim.list_extend(vim.list_extend({ 'build', bazelTarget, '--compile_one_dependency', build_type(module_config) }, global_bazel_args(module_config)), utils.split_args(module_config.bazel_args)),
+    args = vim.list_extend(
+      vim.list_extend({ 'build', bazelTarget, '--compile_one_dependency', build_type(module_config) }, global_bazel_args(module_config)),
+      utils.split_args(module_config.bazel_args)
+    ),
   }
 end
 
