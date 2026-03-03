@@ -82,6 +82,46 @@ function Bazel.tasks.build_all(module_config, _)
   }
 end
 
+function Bazel.tasks.build_current_files_target(module_config, _)
+  local sourceName = vim.fn.expand('%')
+
+  -- Get absolute path of the current file and determine the workspace root
+  local absPath = vim.fn.fnamemodify(sourceName, ':p')
+  local fileDir = vim.fn.fnamemodify(absPath, ':h')
+  local workspaceRoot = vim.fn.getcwd()
+
+  -- Walk up from the file's directory to find the nearest BUILD.bazel (or BUILD)
+  local packageDir = workspaceRoot
+  local searchDir = fileDir
+  while true do
+    if vim.fn.filereadable(searchDir .. '/BUILD.bazel') == 1 or vim.fn.filereadable(searchDir .. '/BUILD') == 1 then
+      packageDir = searchDir
+      break
+    end
+    if searchDir == workspaceRoot then
+      break
+    end
+    local parent = vim.fn.fnamemodify(searchDir, ':h')
+    if parent == searchDir then
+      break
+    end
+    searchDir = parent
+  end
+
+  -- Build the Bazel label: //package:relative_file_path
+  -- e.g. file at src/lib/foo.cc with BUILD.bazel in src/ → //src:lib/foo.cc
+  local packagePath = packageDir == workspaceRoot and '' or packageDir:sub(#workspaceRoot + 2)
+  local filePath = absPath:sub(#packageDir + 2)
+  local bazelTarget = '//' .. packagePath .. ':' .. filePath
+
+  utils.notify(string.format('Bazel target for current file: %s', bazelTarget), vim.log.levels.INFO)
+
+  return {
+    cmd = bazel_command(module_config),
+    args = vim.list_extend(vim.list_extend({ 'build', bazelTarget, '--compile_one_dependency', build_type(module_config) }, global_bazel_args(module_config)), utils.split_args(module_config.bazel_args)),
+  }
+end
+
 function Bazel.tasks.clean(_, _)
   return {
     cmd = 'bazel',
