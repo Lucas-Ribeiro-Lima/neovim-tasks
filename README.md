@@ -395,6 +395,21 @@ lualine.setup({
    - there is also `global_bazel_args` module parameter that will be added before any `bazel_args` to every bazel command. Use it to tweak the default bazel output.
 5. Build and run the project via `:Task start bazel run` or build and debug using `:Task start bazel debug`.
 
+### Tasks
+
+Bazel task module will generate following tasks:
+
+- `build` — builds the currenly selected target
+- `build_all` — builds all targets
+- `build_current_files_target` — builds target associated with currently opened source file 
+- `clean` — runs `bazel clean`
+- `run` — builds and then runs the selected target. Effectively, it runs `bazel run` for the selected target.
+- `debug` — builds and then starts `nvim-dap` debug session for the selected target. Note that selected target is not run using `bazel run --run_under`, but rather built using `bazel build` and then launched under debugger directly from bazel-bin. 
+- `test_all` — runs all tests by running `bazel test //...`
+- `test` - builds and runs the selected target as test. Effectively, it runs `bazel test` for the selected target.
+- `refresh_compile_commands` - runs a bazel target that generates `compile_commands.json` file for the project. This is needed for `clangd` to work properly. The name of the target is defined by `bazel_compile_commands_refresh_target` module parameter, which defaults to `@hedron_compile_commands//:refresh_all`. You can also set it to your own target that generates `compile_commands.json` file.
+- `external_refresh_compile_commands` - runs an external tool that generates `compile_commands.json` file for the project. This is needed for `clangd` to work properly. The tool is defined by `bazel_compile_commands_tool` module parameter, which defaults to `bazel-compile-commands`. You can also set it to your own tool that generates `compile_commands.json` file. The arguments for the tool can be defined by `bazel_compile_commands_tool_args` module parameter, which defaults to `{ '%target%' }`. You can use `%target%` placeholder to put a currently selected bazel target in this place. This may be useful if you want to avoid generating large `compile_commands.json` files that may clog your clangd process.
+
 ### Clangd compile commands JSON generation
 
 #### Using bazel tools, such as [bazel-compile-commands-extractor](https://github.com/hedronvision/bazel-compile-commands-extractor)
